@@ -5,6 +5,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(page_title="AI Churn Early Warning Copilot", layout="wide")
+st.caption("Interactive churn intelligence workspace for Customer Success teams.")
 
 DATA_PATH = "synthetic_saas_churn_dataset.csv"
 MODEL_PATH = "best_churn_model.pkl"
