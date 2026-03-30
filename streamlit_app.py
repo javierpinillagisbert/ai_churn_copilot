@@ -3,6 +3,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import streamlit as st
+import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="AI Churn Early Warning Copilot", layout="wide")
 st.caption("Interactive churn intelligence workspace for Customer Success teams.")
@@ -710,11 +711,76 @@ with tab1:
 
     with c1:
         risk_counts = filtered["risk_level"].value_counts().reindex(["Low", "Medium", "High"]).fillna(0)
-        st.bar_chart(risk_counts)
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        bars = ax.bar(risk_counts.index, risk_counts.values)
+
+        ax.set_title("Accounts by risk level", fontsize=11, pad=12)
+        ax.set_xlabel("")
+        ax.set_ylabel("Accounts", fontsize=10, color="#475569")
+        ax.set_ylim(0, max(risk_counts.values) * 1.20 if len(risk_counts.values) > 0 else 1)
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["left"].set_color("#CBD5E1")
+        ax.spines["bottom"].set_color("#CBD5E1")
+
+        ax.tick_params(axis="x", labelsize=10, colors="#475569", length=0)
+        ax.tick_params(axis="y", labelsize=9, colors="#64748B")
+
+        ax.grid(axis="y", color="#E2E8F0", linewidth=0.8)
+        ax.set_axisbelow(True)
+
+        for bar, value in zip(bars, risk_counts.values):
+            ax.text(
+                bar.get_x() + bar.get_width() / 2,
+                value + max(risk_counts.values) * 0.02 if len(risk_counts.values) > 0 else value + 0.1,
+                f"{int(value)}",
+                ha="center",
+                va="bottom",
+                fontsize=9,
+                color="#334155"
+            )
+
+        plt.xticks(rotation=0)
+        plt.tight_layout()
+        st.pyplot(fig)
 
     with c2:
-        churn_by_segment = filtered.groupby("segment")["churn_probability"].mean().sort_values(ascending=False)
-        st.bar_chart(churn_by_segment)
+        churn_by_segment = filtered.groupby("segment")["churn_probability"].mean().sort_values(ascending=True)
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+        bars = ax.barh(churn_by_segment.index, churn_by_segment.values)
+
+        ax.set_title("Average churn probability by segment", fontsize=11, pad=12)
+        ax.set_xlabel("Churn probability", fontsize=10, color="#475569")
+        ax.set_ylabel("")
+        ax.set_xlim(0, max(churn_by_segment.values) * 1.20 if len(churn_by_segment.values) > 0 else 1)
+
+        ax.spines["top"].set_visible(False)
+        ax.spines["right"].set_visible(False)
+        ax.spines["left"].set_color("#CBD5E1")
+        ax.spines["bottom"].set_color("#CBD5E1")
+
+        ax.tick_params(axis="x", labelsize=9, colors="#64748B")
+        ax.tick_params(axis="y", labelsize=10, colors="#475569", length=0)
+
+        ax.grid(axis="x", color="#E2E8F0", linewidth=0.8)
+        ax.set_axisbelow(True)
+
+        for bar, value in zip(bars, churn_by_segment.values):
+            ax.text(
+                value + 0.01,
+                bar.get_y() + bar.get_height() / 2,
+                f"{value:.1%}",
+                va="center",
+                ha="left",
+                fontsize=9,
+                color="#334155"
+            )
+
+        plt.tight_layout()
+        st.pyplot(fig)
 
     st.markdown('<div class="section-title">Top risk drivers in portfolio</div>', unsafe_allow_html=True)
 st.markdown(
