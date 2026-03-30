@@ -56,83 +56,112 @@ def risk_badge(level: str) -> str:
     '''
 
 def build_explanation(row: pd.Series) -> str:
-    reasons = []
+    signals = []
 
     if row["tool_activity_score"] < 35:
-        reasons.append("product activity has dropped to a low level")
+        signals.append("product engagement is currently weak")
     elif row["tool_activity_score"] < 55:
-        reasons.append("product activity is below the healthy midpoint")
+        signals.append("product usage is below the expected healthy level")
 
     if row["feature_adoption_score"] < 40:
-        reasons.append("adoption of key features is weak")
+        signals.append("adoption of key capabilities remains limited")
     elif row["feature_adoption_score"] < 60:
-        reasons.append("feature adoption is still only partial")
+        signals.append("feature adoption is only partial")
 
     if row["usage_change_vs_prev_quarter"] < -20:
-        reasons.append("usage has fallen sharply versus the previous quarter")
+        signals.append("usage has declined sharply versus the previous quarter")
     elif row["usage_change_vs_prev_quarter"] < -5:
-        reasons.append("usage is trending down compared with the previous quarter")
-
-    if row["days_since_last_login"] > 20:
-        reasons.append("the account has been inactive for a relatively long period")
+        signals.append("usage is trending down compared with the previous quarter")
 
     if row["csat_support"] < 3.2:
-        reasons.append("support satisfaction is below the expected level")
+        signals.append("support satisfaction is below target")
 
     if row["reopened_tickets"] >= 2:
-        reasons.append("multiple support issues were reopened")
+        signals.append("there is repeated support friction")
 
     if row["sentiment_csm"] < -0.2:
-        reasons.append("recent interactions with the CSM show negative sentiment")
+        signals.append("recent customer success interactions show negative sentiment")
 
-    if row["renewal_intent"] == "negative":
-        reasons.append("renewal intent is currently negative")
-    elif row["renewal_intent"] == "neutral":
-        reasons.append("renewal intent is still uncertain")
+    if row["renewal_due_days"] < 30 and row["renewal_intent"] == "negative":
+        signals.append("renewal risk is high in the short term")
+    elif row["renewal_due_days"] < 30 and row["renewal_intent"] == "neutral":
+        signals.append("renewal confidence is still uncertain at a sensitive moment")
 
-    if row["renewal_due_days"] < 30 and row["renewed_last_quarter"] == 0:
-        reasons.append("renewal is approaching without a confirmed renewal signal")
-
-    if not reasons:
+    if not signals:
         return (
-            "This account currently looks stable. Product usage is holding up, the relationship appears healthy, "
-            "and there are no major short-term churn signals."
+            "This account currently looks stable. The customer shows a relatively healthy usage pattern, "
+            "no major support friction, and no immediate signs of commercial deterioration."
         )
 
-    intro = "This account appears at risk because "
-    if len(reasons) == 1:
-        return intro + reasons[0] + "."
-    if len(reasons) == 2:
-        return intro + reasons[0] + " and " + reasons[1] + "."
-    if len(reasons) == 3:
-        return intro + ", ".join(reasons[:2]) + ", and " + reasons[2] + "."
-    return intro + ", ".join(reasons[:3]) + ", and " + reasons[3] + "."
+    intro = "This account is being prioritised because "
+    if len(signals) == 1:
+        body = signals[0]
+    elif len(signals) == 2:
+        body = signals[0] + " and " + signals[1]
+    else:
+        body = ", ".join(signals[:2]) + ", and " + signals[2]
+
+    if row["mrr"] >= 5000:
+        ending = " Given the revenue weight of this account, the risk deserves close attention."
+    elif row["renewal_due_days"] < 30:
+        ending = " The timing is especially relevant because renewal is approaching."
+    else:
+        ending = ""
+
+    return intro + body + "." + ending
 
 def build_recommendation(row: pd.Series, prob: float) -> str:
     actions = []
+    urgency = ""
+    segment = row["segment"]
+    high_mrr = row["mrr"] >= 5000
 
-    if row["tool_activity_score"] < 35 or row["feature_adoption_score"] < 40:
-        actions.append("schedule an adoption-focused session to recover usage of underused features")
+    # Urgency
+    if row["renewal_due_days"] < 15 and row["renewal_intent"] in ["neutral", "negative"]:
+        urgency = "Immediate priority. "
+    elif prob >= 0.70:
+        urgency = "High priority. "
+    elif prob >= 0.40:
+        urgency = "Proactive follow-up recommended. "
+
+    # Core action logic
+    if row["tool_activity_score"] < 35 and row["feature_adoption_score"] < 40:
+        if segment == "Enterprise":
+            actions.append("Schedule an executive-level adoption review and align the customer on business value recovery.")
+        elif segment == "Mid-Market":
+            actions.append("Book a structured adoption session focused on underused capabilities and short-term value recovery.")
+        else:
+            actions.append("Run a focused enablement touchpoint to reactivate usage and highlight quick-win features.")
 
     if row["reopened_tickets"] >= 2 or row["csat_support"] < 3.2:
-        actions.append("review unresolved support friction jointly with the Support team before the next customer touchpoint")
+        actions.append("Coordinate with Support to review unresolved friction before the next proactive customer conversation.")
 
     if row["sentiment_csm"] < -0.2:
-        actions.append("prepare a proactive outreach from the CSM with a clear recovery narrative and next steps")
+        if high_mrr:
+            actions.append("Prepare a tailored recovery outreach with a clear narrative, ownership, and follow-up plan.")
+        else:
+            actions.append("Reach out proactively to reset the relationship and clarify next steps.")
 
     if row["renewal_due_days"] < 30 and row["renewal_intent"] in ["neutral", "negative"]:
-        actions.append("prioritise a renewal-risk follow-up in the next 48 hours")
+        if high_mrr:
+            actions.append("Escalate renewal-risk review internally and define a commercial recovery plan within the next 48 hours.")
+        else:
+            actions.append("Prioritise renewal follow-up in the next 48 hours and clarify blockers to continuation.")
 
-    if row["strategic_review_done"] == 0 and row["segment"] != "SMB":
-        actions.append("book a strategic business review to reconnect product usage with business value")
+    if row["strategic_review_done"] == 0 and segment in ["Mid-Market", "Enterprise"]:
+        actions.append("Book a strategic review to reconnect product adoption with expected business outcomes.")
 
     if row["success_plan_active"] == 0 and prob >= 0.40:
-        actions.append("create a short-term success plan with concrete milestones and ownership")
+        actions.append("Create a short-term success plan with milestones, owners, and a follow-up checkpoint.")
 
+    # Fallback
     if not actions:
-        return "Maintain normal follow-up, keep monitoring the account, and reassess if engagement starts to soften."
+        if segment == "Enterprise":
+            actions.append("Maintain close strategic monitoring and validate that current value realisation remains visible to stakeholders.")
+        else:
+            actions.append("Maintain regular follow-up and continue monitoring the account for early signs of deterioration.")
 
-    return "Recommended next action: " + actions[0] + "."
+    return urgency + actions[0]
 
 def top_signal_table(row: pd.Series) -> pd.DataFrame:
     signals = [
@@ -209,6 +238,28 @@ def portfolio_health_status(score: float):
     if score >= 55:
         return "Watchlist", "watchlist"
     return "At Risk", "atrisk"
+
+def priority_label(row: pd.Series) -> str:
+    if row["risk_level"] == "High" and row["mrr"] >= 2000:
+        return "P1"
+    if row["risk_level"] == "High":
+        return "P2"
+    if row["risk_level"] == "Medium" and row["renewal_due_days"] < 30:
+        return "P2"
+    if row["risk_level"] == "Medium":
+        return "P3"
+    return "Monitor"
+
+def dominant_risk_theme(row: pd.Series) -> str:
+    if row["renewal_due_days"] < 30 and row["renewal_intent"] in ["neutral", "negative"]:
+        return "Commercial risk"
+    if row["tool_activity_score"] < 35 and row["feature_adoption_score"] < 40:
+        return "Adoption risk"
+    if row["reopened_tickets"] >= 2 or row["csat_support"] < 3.2:
+        return "Support risk"
+    if row["sentiment_csm"] < -0.2:
+        return "Relationship risk"
+    return "General health risk"
 
 st.markdown("""
 <style>
@@ -535,6 +586,7 @@ feature_cols = [c for c in df.columns if c not in ["account_id", "churn_label"]]
 X = df[feature_cols].copy()
 df["churn_probability"] = safe_predict_proba(model, X)
 df["risk_level"] = df["churn_probability"].apply(risk_level)
+df["priority"] = df.apply(priority_label, axis=1)
 df = df.sort_values("churn_probability", ascending=False).reset_index(drop=True)
 
 st.sidebar.header("Filters")
@@ -559,8 +611,9 @@ filtered = filtered.sort_values("churn_probability", ascending=False).reset_inde
 retention_rate = ((filtered["renewed_last_quarter"] == 1) | (filtered["subscription_status"] == "active")).mean()
 portfolio_health_score = compute_portfolio_health_score(filtered)
 portfolio_health_label, portfolio_health_class = portfolio_health_status(portfolio_health_score)
+mrr_at_risk = filtered.loc[filtered["risk_level"] == "High", "mrr"].sum()
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5 = st.columns(5)
 
 with col1:
     st.markdown(f"""
@@ -591,6 +644,14 @@ with col4:
     <div class="kpi-card">
         <div class="kpi-label">Retention snapshot</div>
         <div class="kpi-value">{retention_rate:.1%}</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col5:
+    st.markdown(f"""
+    <div class="kpi-card">
+        <div class="kpi-label">MRR at risk</div>
+        <div class="kpi-value">${mrr_at_risk:,.0f}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -740,14 +801,68 @@ st.write("\n".join(obs) if obs else "No observations available.")
 
 with tab2:
     st.subheader("Account Table")
+    st.caption("A ranked operational view of accounts, ordered from highest to lowest churn probability.")
+
+    priority_counts = filtered["priority"].value_counts()
+    t1, t2, t3, t4 = st.columns(4)
+
+    with t1:
+        st.metric("P1 accounts", int(priority_counts.get("P1", 0)))
+    with t2:
+        st.metric("P2 accounts", int(priority_counts.get("P2", 0)))
+    with t3:
+        st.metric("P3 accounts", int(priority_counts.get("P3", 0)))
+    with t4:
+        st.metric("Monitor", int(priority_counts.get("Monitor", 0)))
+
+    st.markdown("### Accounts requiring attention")
+    attention_df = filtered[filtered["priority"].isin(["P1", "P2"])].copy()
+
+    if attention_df.empty:
+        st.info("No high-priority accounts in the current filtered view.")
+    else:
+        attention_preview = attention_df[[
+            "account_id", "priority", "segment", "plan_tier", "mrr",
+            "churn_probability", "renewal_intent", "renewal_due_days"
+        ]].head(8).copy()
+
+        attention_preview["mrr"] = attention_preview["mrr"].map(lambda x: f"${x:,.0f}")
+        attention_preview["churn_probability"] = attention_preview["churn_probability"].map(lambda x: f"{x:.1%}")
+
+        st.dataframe(attention_preview, use_container_width=True, hide_index=True)
+
+    st.markdown("### Full account view")
+
     table_cols = [
-        "account_id", "segment", "plan_tier", "subscription_type",
-        "churn_probability", "risk_level", "renewal_intent", "renewal_due_days",
-        "tool_activity_score", "feature_adoption_score", "csat_support", "sentiment_csm"
+        "priority",
+        "account_id",
+        "segment",
+        "plan_tier",
+        "subscription_type",
+        "mrr",
+        "churn_probability",
+        "risk_level",
+        "renewal_intent",
+        "renewal_due_days",
+        "tool_activity_score",
+        "feature_adoption_score",
+        "csat_support",
+        "sentiment_csm"
     ]
+
     display_df = filtered[table_cols].copy()
+
+    priority_order = {"P1": 1, "P2": 2, "P3": 3, "Monitor": 4}
+    display_df["priority_sort"] = display_df["priority"].map(priority_order)
+
+    display_df = display_df.sort_values(
+        by=["priority_sort", "churn_probability"],
+        ascending=[True, False]
+    ).drop(columns=["priority_sort"])
+
+    display_df["mrr"] = display_df["mrr"].map(lambda x: f"${x:,.0f}")
     display_df["churn_probability"] = display_df["churn_probability"].map(lambda x: f"{x:.1%}")
-    st.caption("Accounts are ordered from highest to lowest churn probability.")
+
     st.dataframe(display_df, use_container_width=True, hide_index=True)
 
 with tab3:
@@ -762,6 +877,8 @@ with tab3:
         # Header
         chips = build_risk_chips(row)
         chips_html = "".join([f'<span class="account-chip">{chip}</span>' for chip in chips])
+        dominant_theme = dominant_risk_theme(row)
+        chips_html += f'<span class="account-chip">{dominant_theme}</span>'
 
         st.markdown(f'''
         <div class="account-header-card">
@@ -772,13 +889,19 @@ with tab3:
         ''', unsafe_allow_html=True)
 
         # Top metrics
-        c1, c2, c3 = st.columns(3)
+        c1, c2, c3, c4 = st.columns(4)
+
         with c1:
             st.metric("Churn probability", f'{row["churn_probability"]:.1%}')
+
         with c2:
             st.markdown(risk_badge(row["risk_level"]), unsafe_allow_html=True)
+
         with c3:
             st.metric("Renewal due in", f'{int(row["renewal_due_days"])} days')
+
+        with c4:
+            st.metric("MRR", f'${row["mrr"]:,.0f}')
 
         # Explanation and action
         left, right = st.columns([1.1, 1])
