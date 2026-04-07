@@ -25,10 +25,10 @@ def safe_predict_proba(model, X: pd.DataFrame) -> np.ndarray:
     preds = model.predict(X)
     return preds.astype(float)
 
-def risk_level(prob: float) -> str:
-    if prob >= 0.70:
+def risk_level(prob):
+    if prob >= 0.60:
         return "High"
-    if prob >= 0.40:
+    elif prob >= 0.30:
         return "Medium"
     return "Low"
 
@@ -57,20 +57,21 @@ def risk_badge(level: str) -> str:
     '''
 
 def build_explanation(row: pd.Series) -> str:
+    risk = row["risk_level"]
     signals = []
 
     if row["tool_activity_score"] < 35:
-        signals.append("product engagement is currently weak")
+        signals.append("product engagement is weak")
     elif row["tool_activity_score"] < 55:
-        signals.append("product usage is below the expected healthy level")
+        signals.append("product usage is below the ideal level")
 
     if row["feature_adoption_score"] < 40:
-        signals.append("adoption of key capabilities remains limited")
+        signals.append("adoption of key capabilities is limited")
     elif row["feature_adoption_score"] < 60:
         signals.append("feature adoption is only partial")
 
     if row["usage_change_vs_prev_quarter"] < -20:
-        signals.append("usage has declined sharply versus the previous quarter")
+        signals.append("usage has declined sharply compared with the previous quarter")
     elif row["usage_change_vs_prev_quarter"] < -5:
         signals.append("usage is trending down compared with the previous quarter")
 
@@ -86,83 +87,168 @@ def build_explanation(row: pd.Series) -> str:
     if row["renewal_due_days"] < 30 and row["renewal_intent"] == "negative":
         signals.append("renewal risk is high in the short term")
     elif row["renewal_due_days"] < 30 and row["renewal_intent"] == "neutral":
-        signals.append("renewal confidence is still uncertain at a sensitive moment")
+        signals.append("renewal confidence remains uncertain")
 
     if not signals:
+        if risk == "Low":
+            return (
+                "This account currently appears healthy overall. No major churn signals are visible at this stage, "
+                "and the account can remain under regular monitoring."
+            )
+        elif risk == "Medium":
+            return (
+                "This account shows some moderate attention points, but the overall picture is still manageable. "
+                "A preventive review would help confirm whether risk is increasing."
+            )
+        else:
+            return (
+                "This account has been classified as high risk and should be reviewed closely, even if the current "
+                "signals are not concentrated in a single visible area."
+            )
+
+    # Construcción natural de señales
+    if len(signals) == 1:
+        signal_text = signals[0]
+    elif len(signals) == 2:
+        signal_text = signals[0] + " and " + signals[1]
+    else:
+        signal_text = ", ".join(signals[:2]) + ", and " + signals[2]
+
+    if risk == "Low":
         return (
-            "This account currently looks stable. The customer shows a relatively healthy usage pattern, "
-            "no major support friction, and no immediate signs of commercial deterioration."
+            f"This account currently looks relatively stable, although {signal_text}. "
+            "These signals do not yet suggest critical churn risk, but they are worth monitoring."
         )
 
-    intro = "This account is being prioritised because "
-    if len(signals) == 1:
-        body = signals[0]
-    elif len(signals) == 2:
-        body = signals[0] + " and " + signals[1]
-    else:
-        body = ", ".join(signals[:2]) + ", and " + signals[2]
+    elif risk == "Medium":
+        return (
+            f"This account shows early signs of deterioration because {signal_text}. "
+            "While the situation is not yet critical, a proactive intervention would be advisable."
+        )
 
-    if row["mrr"] >= 5000:
-        ending = " Given the revenue weight of this account, the risk deserves close attention."
-    elif row["renewal_due_days"] < 30:
-        ending = " The timing is especially relevant because renewal is approaching."
-    else:
+    else:  # High
         ending = ""
+        if row["mrr"] >= 5000:
+            ending = " Given the revenue weight of this account, the risk deserves immediate attention."
+        elif row["renewal_due_days"] < 30:
+            ending = " The timing is especially sensitive because renewal is approaching."
 
-    return intro + body + "." + ending
+        return (
+            f"This account is being prioritised because {signal_text}. "
+            f"It should be treated as a high-risk case for intervention.{ending}"
+        )
 
-def build_recommendation(row: pd.Series, prob: float) -> str:
-    actions = []
-    urgency = ""
-    segment = row["segment"]
-    high_mrr = row["mrr"] >= 5000
+def build_recommendation(row, churn_probability):
+    account_name = row.get("account_name", "This account")
 
-    # Urgency
-    if row["renewal_due_days"] < 15 and row["renewal_intent"] in ["neutral", "negative"]:
-        urgency = "Immediate priority. "
-    elif prob >= 0.70:
-        urgency = "High priority. "
-    elif prob >= 0.40:
-        urgency = "Proactive follow-up recommended. "
+    def safe_get(key, default=None):
+        value = row.get(key, default)
+        return default if value is None else value
 
-    # Core action logic
-    if row["tool_activity_score"] < 35 and row["feature_adoption_score"] < 40:
-        if segment == "Enterprise":
-            actions.append("Schedule an executive-level adoption review and align the customer on business value recovery.")
-        elif segment == "Mid-Market":
-            actions.append("Book a structured adoption session focused on underused capabilities and short-term value recovery.")
-        else:
-            actions.append("Run a focused enablement touchpoint to reactivate usage and highlight quick-win features.")
+    csat = safe_get("csat", 4.0)
+    csm_sentiment = safe_get("csm_sentiment", 0.0)
+    mrr = safe_get("mrr", 0)
+    logins = safe_get("logins_last_30d", safe_get("logins", 0))
+    usage = safe_get("feature_usage_pct", safe_get("usage_pct", None))
+    tickets = safe_get("support_tickets_last_30d", safe_get("support_tickets", None))
+    users_added = safe_get("users_added_last_90d", safe_get("users_added", None))
 
-    if row["reopened_tickets"] >= 2 or row["csat_support"] < 3.2:
-        actions.append("Coordinate with Support to review unresolved friction before the next proactive customer conversation.")
+    risk_band = "low"
+    if churn_probability >= 0.7:
+        risk_band = "high"
+    elif churn_probability >= 0.4:
+        risk_band = "medium"
 
-    if row["sentiment_csm"] < -0.2:
-        if high_mrr:
-            actions.append("Prepare a tailored recovery outreach with a clear narrative, ownership, and follow-up plan.")
-        else:
-            actions.append("Reach out proactively to reset the relationship and clarify next steps.")
+    risk_title = {
+        "high": "High-risk retention priority",
+        "medium": "Medium-risk account to stabilize",
+        "low": "Healthy account with expansion potential",
+    }[risk_band]
 
-    if row["renewal_due_days"] < 30 and row["renewal_intent"] in ["neutral", "negative"]:
-        if high_mrr:
-            actions.append("Escalate renewal-risk review internally and define a commercial recovery plan within the next 48 hours.")
-        else:
-            actions.append("Prioritise renewal follow-up in the next 48 hours and clarify blockers to continuation.")
+    positive_signals = []
+    negative_signals = []
 
-    if row["strategic_review_done"] == 0 and segment in ["Mid-Market", "Enterprise"]:
-        actions.append("Book a strategic review to reconnect product adoption with expected business outcomes.")
+    if csat is not None:
+        if csat < 3:
+            negative_signals.append("low CSAT is weakening the post-support experience")
+        elif csat >= 4:
+            positive_signals.append("customer satisfaction remains solid")
 
-    if row["success_plan_active"] == 0 and prob >= 0.40:
-        actions.append("Create a short-term success plan with milestones, owners, and a follow-up checkpoint.")
+    if csm_sentiment is not None:
+        if csm_sentiment < 0:
+            negative_signals.append("recent CSM sentiment suggests relationship friction")
+        elif csm_sentiment > 0.25:
+            positive_signals.append("recent CSM sentiment suggests a constructive relationship")
 
-    # Fallback
-    if not actions:
-        if segment == "Enterprise":
-            actions.append("Maintain close strategic monitoring and validate that current value realisation remains visible to stakeholders.")
-        else:
-            actions.append("Maintain regular follow-up and continue monitoring the account for early signs of deterioration.")
+    if logins is not None:
+        if logins < 5:
+            negative_signals.append("product activity is very limited")
+        elif logins >= 12:
+            positive_signals.append("login activity indicates recurring usage")
 
-    return urgency + actions[0]
+    if usage is not None:
+        if usage < 40:
+            negative_signals.append("feature adoption appears shallow")
+        elif usage >= 70:
+            positive_signals.append("feature adoption is relatively strong")
+
+    if tickets is not None:
+        if tickets >= 5:
+            negative_signals.append("support demand is elevated and may indicate friction")
+
+    if users_added is not None:
+        if users_added <= 0:
+            negative_signals.append("there are no recent signs of account growth")
+        elif users_added >= 3:
+            positive_signals.append("the account is still adding users")
+
+    impact_note = ""
+    if mrr is not None:
+        if mrr >= 5000:
+            impact_note = " Given the revenue impact of this account, proactive ownership is especially important."
+        elif mrr >= 1500:
+            impact_note = " This account also carries meaningful commercial value and deserves close attention."
+
+    if risk_band == "high":
+        opening = (
+            f"<strong>{risk_title}.</strong> {account_name} shows a material likelihood of churn and should be treated as an active retention case."
+        )
+
+        action_priority = (
+            "Recommended next step: schedule a proactive outreach with a clear recovery plan, align on the root causes behind declining health, and define one or two concrete actions the customer can feel within the next cycle."
+        )
+
+    elif risk_band == "medium":
+        opening = (
+            f"<strong>{risk_title}.</strong> {account_name} is not yet in a critical state, but several indicators suggest the relationship may weaken if no action is taken."
+        )
+
+        action_priority = (
+            "Recommended next step: run a structured check-in, validate whether the customer is realizing value, and intervene early on adoption or support-related blockers before the account moves into a higher-risk segment."
+        )
+
+    else:
+        opening = (
+            f"<strong>{risk_title}.</strong> {account_name} appears relatively stable at this stage, with no immediate signs of severe churn risk."
+        )
+
+        action_priority = (
+            "Recommended next step: maintain a steady engagement rhythm, reinforce business value, and use the account as an opportunity to deepen adoption, strengthen advocacy, or identify expansion signals."
+        )
+
+    signals_text = ""
+    if negative_signals:
+        signals_text += " Key risk signals: " + "; ".join(negative_signals).capitalize() + "."
+    if positive_signals:
+        signals_text += " Positive signals: " + "; ".join(positive_signals).capitalize() + "."
+
+    if not negative_signals and risk_band in ["high", "medium"]:
+        signals_text += " The account risk is elevated even though the visible operational signals are mixed, so a qualitative review with the CSM is recommended."
+
+    if not positive_signals and risk_band == "low":
+        signals_text += " Even if the account is currently low risk, it would still benefit from stronger evidence of value realization and long-term stickiness."
+
+    return f"{opening} {action_priority}{signals_text}{impact_note}"
 
 def top_signal_table(row: pd.Series) -> pd.DataFrame:
     signals = [
@@ -452,16 +538,30 @@ st.markdown("""
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
     margin-bottom: 14px;
 }
+.detail-card.risk-high {
+    border-left: 6px solid #d9534f;
+    background: linear-gradient(180deg, #fff8f8 0%, #ffffff 100%);
+}
+
+.detail-card.risk-medium {
+    border-left: 6px solid #f0ad4e;
+    background: linear-gradient(180deg, #fffaf2 0%, #ffffff 100%);
+}
+
+.detail-card.risk-low {
+    border-left: 6px solid #2e8b57;
+    background: linear-gradient(180deg, #f6fffa 0%, #ffffff 100%);
+}
 .detail-card-title {
-    font-size: 16px;
-    font-weight: 800;
-    color: #111827;
-    margin-bottom: 10px;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
 }
 .detail-card-body {
-    color: #475569;
-    font-size: 14px;
+    font-size: 0.95rem;
     line-height: 1.6;
+    color: #374151;
 }
 .signal-card {
     background: white;
@@ -968,22 +1068,40 @@ with tab3:
 
         with c4:
             st.metric("MRR", f'${row["mrr"]:,.0f}')
+    if row["risk_level"] == "Low":
+        explanation_title = "Current account health"
+        action_title = "Suggested follow-up"
+    elif row["risk_level"] == "Medium":
+        explanation_title = "Emerging risk signals"
+        action_title = "Recommended preventive action"
+    else:
+        explanation_title = "Why this account is at risk"
+        action_title = "Next best action"
 
         # Explanation and action
         left, right = st.columns([1.1, 1])
 
         with left:
-            st.markdown(f'''
-            <div class="detail-card">
-                <div class="detail-card-title">Why this account is at risk</div>
-                <div class="detail-card-body">{build_explanation(row)}</div>
-            </div>
-            ''', unsafe_allow_html=True)
+            risk_class = (
+                "risk-high" if float(row["churn_probability"]) >= 0.7
+                else "risk-medium" if float(row["churn_probability"]) >= 0.4
+                else "risk-low"
+            )
+
+            st.markdown(
+                f"""
+                <div class="detail-card {risk_class}">
+                    <div class="detail-card-title">AI Recommendation</div>
+                    <div class="detail-card-body">{build_recommendation(row, float(row["churn_probability"]))}</div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
 
         with right:
             st.markdown(f'''
             <div class="action-panel">
-                <div class="action-panel-title">Next best action</div>
+                <div class="action-panel-title">{action_title}</div>
                 <div class="detail-card-body">{build_recommendation(row, float(row["churn_probability"]))}</div>
             </div>
             ''', unsafe_allow_html=True)
