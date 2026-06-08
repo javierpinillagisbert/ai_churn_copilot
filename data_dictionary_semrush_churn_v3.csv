@@ -1,0 +1,140 @@
+field,group,dtype,description,model_usage
+account_id,Account profile,object,Synthetic account identifier. Not used as a predictive feature.,Excluded
+account_name,Account profile,object,Synthetic customer/account name. Excluded from model features.,Excluded
+segment,Account profile,object,Synthetic customer segment.,Predictive feature
+industry,Account profile,object,Synthetic customer industry.,Predictive feature
+region,Account profile,object,Synthetic geographic region.,Predictive feature
+customer_type,Account profile,object,"Synthetic account type: brand, in-house team, consultant, or agency.",Predictive feature
+agency_flag,Account profile,int64,1 if the synthetic account is an agency-style account.,Predictive feature
+multi_location_business_flag,Account profile,int64,1 if the synthetic account has multiple physical/local locations.,Predictive feature
+tenure_months,Account profile,int64,Months since customer start date in the synthetic dataset.,Predictive feature
+mrr,Account profile,float64,Synthetic monthly recurring revenue.,Predictive feature
+arr,Account profile,float64,Synthetic annual recurring revenue.,Predictive feature
+plan_family,Account profile,object,Main Semrush-like toolkit family for the account.,Predictive feature
+plan_tier,Account profile,object,Synthetic plan/tier inspired by public Semrush product structure.,Predictive feature
+subscription_type,Account profile,object,"Synthetic commercial type: monthly, annual, or custom contract.",Predictive feature
+number_of_users,Account profile,int64,Number of users,Predictive feature
+active_users_30d,Account profile,int64,Active users 30d,Predictive feature
+seo_toolkit_active,Bundle adoption,int64,Seo toolkit active,Predictive feature
+traffic_market_toolkit_active,Bundle adoption,int64,Traffic market toolkit active,Predictive feature
+ai_visibility_active,Bundle adoption,int64,Ai visibility active,Predictive feature
+local_toolkit_active,Bundle adoption,int64,Local toolkit active,Predictive feature
+content_toolkit_active,Bundle adoption,int64,Content toolkit active,Predictive feature
+app_center_usage_flag,Bundle adoption,int64,App center usage flag,Predictive feature
+api_access_available,Bundle adoption,int64,Api access available,Predictive feature
+api_access_used,Bundle adoption,int64,Api access used,Predictive feature
+historical_data_available,Bundle adoption,int64,Historical data available,Predictive feature
+historical_data_used,Bundle adoption,int64,Historical data used,Predictive feature
+share_of_voice_available,Bundle adoption,int64,Share of voice available,Predictive feature
+share_of_voice_used,Bundle adoption,int64,Share of voice used,Predictive feature
+websites_monitored,SEO usage and limits,int64,Websites monitored,Predictive feature
+websites_limit,SEO usage and limits,int64,Websites limit,Predictive feature
+websites_usage_pct,SEO usage and limits,float64,Websites usage pct,Predictive feature
+keywords_tracked,SEO usage and limits,int64,Keywords tracked,Predictive feature
+keywords_limit,SEO usage and limits,int64,Keywords limit,Predictive feature
+keyword_tracking_usage_pct,SEO usage and limits,float64,Keyword tracking usage pct,Predictive feature
+pages_crawled_month,SEO usage and limits,int64,Pages crawled month,Predictive feature
+pages_crawl_limit,SEO usage and limits,int64,Pages crawl limit,Predictive feature
+crawl_budget_usage_pct,SEO usage and limits,float64,Crawl budget usage pct,Predictive feature
+results_per_report_used,SEO usage and limits,int64,Results per report used,Predictive feature
+results_per_report_limit,SEO usage and limits,int64,Results per report limit,Predictive feature
+results_per_report_usage_pct,SEO usage and limits,float64,Results per report usage pct,Predictive feature
+keyword_metric_updates_used,SEO usage and limits,int64,Keyword metric updates used,Predictive feature
+keyword_metric_updates_limit,SEO usage and limits,int64,Keyword metric updates limit,Predictive feature
+keyword_metric_updates_usage_pct,SEO usage and limits,float64,Keyword metric updates usage pct,Predictive feature
+site_audit_projects_active,Tool-specific adoption,int64,Site audit projects active,Predictive feature
+site_audit_last_run_days,Tool-specific adoption,int64,Site audit last run days,Predictive feature
+site_audit_health_score_avg,Tool-specific adoption,float64,Site audit health score avg,Predictive feature
+site_audit_blocking_issues_count,Tool-specific adoption,int64,Site audit blocking issues count,Predictive feature
+position_tracking_campaigns_active,Tool-specific adoption,int64,Position tracking campaigns active,Predictive feature
+position_tracking_keywords_active,Tool-specific adoption,int64,Position tracking keywords active,Predictive feature
+position_tracking_multitargeting_used,Tool-specific adoption,int64,Position tracking multitargeting used,Predictive feature
+keyword_magic_queries_30d,Tool-specific adoption,int64,Keyword magic queries 30d,Predictive feature
+backlink_reports_used_30d,Tool-specific adoption,int64,Backlink reports used 30d,Predictive feature
+competitor_gap_reports_used_30d,Tool-specific adoption,int64,Competitor gap reports used 30d,Predictive feature
+my_reports_used_30d,Tool-specific adoption,int64,My reports used 30d,Predictive feature
+lookerstudio_integration_used,Tool-specific adoption,int64,Lookerstudio integration used,Predictive feature
+ai_visibility_score_tracked,AI Visibility usage,float64,Ai visibility score tracked,Predictive feature
+ai_visibility_prompts_tracked,AI Visibility usage,int64,Ai visibility prompts tracked,Predictive feature
+ai_visibility_prompt_limit,AI Visibility usage,int64,Ai visibility prompt limit,Predictive feature
+ai_visibility_prompt_usage_pct,AI Visibility usage,float64,Ai visibility prompt usage pct,Predictive feature
+ai_visibility_daily_queries_used,AI Visibility usage,int64,Ai visibility daily queries used,Predictive feature
+ai_visibility_daily_query_limit,AI Visibility usage,int64,Ai visibility daily query limit,Predictive feature
+ai_visibility_query_usage_pct,AI Visibility usage,float64,Ai visibility query usage pct,Predictive feature
+prompt_research_queries_used,AI Visibility usage,int64,Prompt research queries used,Predictive feature
+prompt_research_query_limit,AI Visibility usage,int64,Prompt research query limit,Predictive feature
+ai_visibility_exports_used,AI Visibility usage,int64,Ai visibility exports used,Predictive feature
+ai_visibility_exports_limit,AI Visibility usage,int64,Ai visibility exports limit,Predictive feature
+ai_visibility_exports_usage_pct,AI Visibility usage,float64,Ai visibility exports usage pct,Predictive feature
+ai_search_checks_used,AI Visibility usage,int64,Ai search checks used,Predictive feature
+ai_search_checks_limit,AI Visibility usage,int64,Ai search checks limit,Predictive feature
+brand_performance_reports_used,AI Visibility usage,int64,Brand performance reports used,Predictive feature
+competitor_ai_visibility_reports_used,AI Visibility usage,int64,Competitor ai visibility reports used,Predictive feature
+local_locations_active,Local Toolkit usage,int64,Local locations active,Predictive feature
+local_locations_target,Local Toolkit usage,int64,Local locations target,Predictive feature
+listing_management_active,Local Toolkit usage,int64,Listing management active,Predictive feature
+review_management_active,Local Toolkit usage,int64,Review management active,Predictive feature
+review_generation_used,Local Toolkit usage,int64,Review generation used,Predictive feature
+local_rank_tracking_active,Local Toolkit usage,int64,Local rank tracking active,Predictive feature
+duplicate_suppression_issues,Local Toolkit usage,int64,Duplicate suppression issues,Predictive feature
+frozen_locations_count,Local Toolkit usage,int64,Frozen locations count,Predictive feature
+local_reviews_collected_30d,Local Toolkit usage,int64,Local reviews collected 30d,Predictive feature
+average_local_rating,Local Toolkit usage,float64,Average local rating,Predictive feature
+login_count_30d,Core engagement and CSM,int64,Login count 30d,Predictive feature
+tool_activity_score,Core engagement and CSM,float64,Tool activity score,Predictive feature
+usage_change_vs_prev_quarter,Core engagement and CSM,float64,Usage change vs prev quarter,Predictive feature
+feature_adoption_score,Core engagement and CSM,float64,Feature adoption score,Predictive feature
+key_reports_used_30d,Core engagement and CSM,int64,Key reports used 30d,Predictive feature
+days_since_last_login,Core engagement and CSM,int64,Days since last login,Predictive feature
+emails_with_csm_30d,Core engagement and CSM,int64,Emails with csm 30d,Predictive feature
+csm_meetings_last_quarter,Core engagement and CSM,int64,Csm meetings last quarter,Predictive feature
+strategic_review_done,Core engagement and CSM,int64,Strategic review done,Predictive feature
+success_plan_active,Core engagement and CSM,int64,Success plan active,Predictive feature
+renewal_due_days,Renewal and commercial,int64,Renewal due days,Predictive feature
+renewal_intent,Renewal and commercial,object,Renewal intent,Predictive feature
+renewed_last_quarter,Renewal and commercial,int64,Renewed last quarter,Predictive feature
+subscription_status,Renewal and commercial,object,Subscription status,Predictive feature
+in_grace_period,Renewal and commercial,int64,In grace period,Predictive feature
+expansion_opportunity_flag,Renewal and commercial,int64,Expansion opportunity flag,Predictive feature
+downgrade_risk_flag,Renewal and commercial,int64,Downgrade risk flag,Predictive feature
+pricing_objection_flag,Renewal and commercial,int64,Pricing objection flag,Predictive feature
+limit_upgrade_recommended_flag,Renewal and commercial,int64,Limit upgrade recommended flag,Predictive feature
+tickets_last_quarter,Support and sentiment,int64,Tickets last quarter,Predictive feature
+technical_tickets_last_quarter,Support and sentiment,int64,Technical tickets last quarter,Predictive feature
+billing_tickets_last_quarter,Support and sentiment,int64,Billing tickets last quarter,Predictive feature
+reopened_tickets,Support and sentiment,int64,Reopened tickets,Predictive feature
+avg_resolution_days,Support and sentiment,float64,Avg resolution days,Predictive feature
+csat_support,Support and sentiment,float64,Csat support,Predictive feature
+sentiment_csm,Support and sentiment,float64,Sentiment csm,Predictive feature
+sentiment_support,Support and sentiment,float64,Sentiment support,Predictive feature
+bugs_reported_90d,Bugs and reliability,int64,Bugs reported 90d,Predictive feature
+critical_bugs_reported_90d,Bugs and reliability,int64,Critical bugs reported 90d,Predictive feature
+open_bugs_count,Bugs and reliability,int64,Open bugs count,Predictive feature
+stuck_bugs_count,Bugs and reliability,int64,Stuck bugs count,Predictive feature
+avg_bug_resolution_days,Bugs and reliability,float64,Avg bug resolution days,Predictive feature
+oldest_open_bug_days,Bugs and reliability,int64,Oldest open bug days,Predictive feature
+bug_reopen_count,Bugs and reliability,int64,Bug reopen count,Predictive feature
+data_accuracy_bug_flag,Bugs and reliability,int64,Data accuracy bug flag,Predictive feature
+site_audit_bug_flag,Bugs and reliability,int64,Site audit bug flag,Predictive feature
+position_tracking_bug_flag,Bugs and reliability,int64,Position tracking bug flag,Predictive feature
+ai_visibility_bug_flag,Bugs and reliability,int64,Ai visibility bug flag,Predictive feature
+local_listing_sync_bug_flag,Bugs and reliability,int64,Local listing sync bug flag,Predictive feature
+workaround_available_flag,Bugs and reliability,int64,Workaround available flag,Predictive feature
+bug_sentiment_score,Bugs and reliability,float64,Bug sentiment score,Predictive feature
+bug_linked_to_renewal_flag,Bugs and reliability,int64,Bug linked to renewal flag,Predictive feature
+feedback_count_90d,Product feedback and roadmap fit,int64,Feedback count 90d,Predictive feature
+feature_requests_count_90d,Product feedback and roadmap fit,int64,Feature requests count 90d,Predictive feature
+data_recalculation_requests_90d,Product feedback and roadmap fit,int64,Data recalculation requests 90d,Predictive feature
+tool_limit_feedback_count,Product feedback and roadmap fit,int64,Tool limit feedback count,Predictive feature
+database_coverage_feedback_count,Product feedback and roadmap fit,int64,Database coverage feedback count,Predictive feature
+ai_visibility_feedback_count,Product feedback and roadmap fit,int64,Ai visibility feedback count,Predictive feature
+local_toolkit_feedback_count,Product feedback and roadmap fit,int64,Local toolkit feedback count,Predictive feature
+critical_feedback_count_90d,Product feedback and roadmap fit,int64,Critical feedback count 90d,Predictive feature
+unresolved_feedback_count,Product feedback and roadmap fit,int64,Unresolved feedback count,Predictive feature
+avg_unresolved_feedback_age_days,Product feedback and roadmap fit,float64,Avg unresolved feedback age days,Predictive feature
+roadmap_alignment_score,Product feedback and roadmap fit,float64,Roadmap alignment score,Predictive feature
+feedback_sentiment_score,Product feedback and roadmap fit,float64,Feedback sentiment score,Predictive feature
+competitor_mentioned_in_feedback,Product feedback and roadmap fit,int64,Competitor mentioned in feedback,Predictive feature
+feedback_linked_to_renewal,Product feedback and roadmap fit,int64,Feedback linked to renewal,Predictive feature
+synthetic_true_churn_probability,Target and synthetic helper,float64,Hidden synthetic probability used to generate churn_label. Not used by model.,Excluded
+churn_label,Target and synthetic helper,int64,"Training target. 1 = churned, 0 = retained. Not used as a live scoring input.",Excluded

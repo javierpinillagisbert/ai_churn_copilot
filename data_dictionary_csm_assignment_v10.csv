@@ -1,0 +1,10 @@
+field,description
+csm_name,Synthetic CSM owner assigned to the account for portfolio workflow and filtering.
+csm_region,CSM operating region used to balance timezone and customer coverage.
+csm_timezone,Primary working timezone of the assigned CSM.
+csm_focus_area,"Main portfolio specialization such as SEO Toolkit, AI Visibility, Local Toolkit, Agencies or Enterprise."
+csm_seniority,Synthetic seniority level used for storytelling and book-of-business segmentation.
+csm_manager,Synthetic manager for manager-level portfolio views.
+book_tier,"Book-of-business tier: Strategic, Growth or Scale."
+csm_portfolio_size,Number of accounts assigned to the CSM in the synthetic dataset.
+csm_assigned_account_rank,Rank of this account inside the CSM book by synthetic underlying churn risk.

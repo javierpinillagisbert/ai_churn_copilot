@@ -21,3 +21,13 @@ streamlit run streamlit_app.py
 - Risk level
 - Human-readable explanation
 - Suggested next action
+
+## Run locally
+
+```bash
+git clone https://github.com/javierpinillagisbert/ai_churn_copilot.git
+cd ai_churn_copilot
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+streamlit run streamlit_app.py
